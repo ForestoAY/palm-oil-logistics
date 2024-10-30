@@ -1,9 +1,25 @@
-// api/logistics.js
-const { Pool } = require("pg");
-const cors = require("cors");
-const dotenv = require("dotenv");
+import Cors from "cors";
+import { Pool } from "pg";
+import dotenv from "dotenv";
 
 dotenv.config();
+
+// Initialize the CORS middleware
+const cors = Cors({
+  methods: ["GET", "HEAD"],
+});
+
+// Helper function to run the middleware
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+}
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -20,15 +36,17 @@ const cut_off_date_start = new Date("2024-08-05");
 const cut_off_date_end = new Date("2024-09-05");
 
 export default async function handler(req, res) {
-  // Pastikan hanya menerima permintaan GET
+  // Run the CORS middleware
+  await runMiddleware(req, res, cors);
+
+  // Ensure only GET requests are allowed
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
     const result = await pool.query(
-      `
-            SELECT 
+      `SELECT 
                 "bkm_sites"."nama" AS site,
                 "bkm_do_kecil_header"."no_do_kecil" AS "do_kecil",
                 "bkm_do_kecil_header"."id" AS "do_kecil_id",
