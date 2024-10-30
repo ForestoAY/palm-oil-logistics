@@ -1,14 +1,9 @@
-const express = require("express");
+// api/logistics.js
 const { Pool } = require("pg");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
-
-const app = express();
-const port = 3000;
-
-app.use(cors());
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -24,7 +19,12 @@ const commodity_price = 10000; // Rp 10,000/kg
 const cut_off_date_start = new Date("2024-08-05");
 const cut_off_date_end = new Date("2024-09-05");
 
-app.get("/api/logistics", async (req, res) => {
+export default async function handler(req, res) {
+  // Pastikan hanya menerima permintaan GET
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
   try {
     const result = await pool.query(
       `
@@ -168,8 +168,4 @@ app.get("/api/logistics", async (req, res) => {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+}
